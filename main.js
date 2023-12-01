@@ -4,17 +4,6 @@ const options = {
 const io = require("socket.io")(options);
 
 let rooms = {};
-const emptyBoard = [
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", "", ""],
-]
 
 const createRoomID = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -34,7 +23,7 @@ io.on('connection', (socket) => {
     //create
     socket.on('create', () => {
         const roomID = createRoomID();
-        rooms[roomID] = { "players": [socket.id], "turn": 0, board: emptyBoard };
+        rooms[roomID] = { "players": [socket.id], "turn": 0, board: [[], [], [], [], [], [], [], [], []] };
         socket.emit('created', { roomID: roomID });
         console.log('Client created a room: ' + roomID);
     });
@@ -52,7 +41,7 @@ io.on('connection', (socket) => {
 
     //cellClick
     socket.on('cellClick', ({ roomID, tableID, cellID, playerChar }) => {
-        console.log('Client clicked on ' + tableID + '-' + cellID + ' in room ' + roomID);
+        console.log('Player ' + playerChar + ' clicked on ' + tableID + '-' + cellID + ' in room ' + roomID);
         if (!Object.keys(rooms).includes(roomID)) {
             socket.emit('invalid', 'Invalid roomID');
             return;
@@ -65,7 +54,7 @@ io.on('connection', (socket) => {
             socket.emit('invalid', 'Not your turn');
             return;
         }
-        if (rooms[roomID].board[tableID][cellID] != "") {
+        if (rooms[roomID].board[tableID][cellID] != null) {
             socket.emit('invalid', 'Cell already taken');
             return;
         }
@@ -73,7 +62,12 @@ io.on('connection', (socket) => {
         rooms[roomID].turn = (rooms[roomID].turn + 1) % 2;
         socket.emit('cellClicked', { roomID: roomID, tableID: tableID, cellID: cellID, playerChar: playerChar });
         socket.broadcast.to(rooms[roomID].players[rooms[roomID].turn]).emit('cellClicked', { roomID: roomID, tableID: tableID, cellID: cellID, playerChar: playerChar });
-        console.log('Client clicked on ' + tableID + '-' + cellID + ' in room ' + roomID);
+
+        if (checkTable(rooms[roomID].board[tableID])) {
+            socket.emit('winTable', { roomID: roomID, tableID: tableID, winner: playerChar });
+            socket.broadcast.to(rooms[roomID].players[rooms[roomID].turn]).emit('winTable', { roomID: roomID, tableID: tableID, winner: playerChar });
+            console.log('Client won the table ' + tableID + ' in room ' + roomID);
+        }
     });
 
     //disconnect
@@ -81,6 +75,21 @@ io.on('connection', (socket) => {
         console.log('Client disconnected');
     });
 });
+
+function checkTable(table) {
+    if (table[0] == table[1] && table[1] == table[2] && table[0] != null) return true;
+    if (table[3] == table[4] && table[4] == table[5] && table[3] != null) return true;
+    if (table[6] == table[7] && table[7] == table[8] && table[6] != null) return true;
+
+    if (table[0] == table[3] && table[3] == table[6] && table[0] != null) return true;
+    if (table[1] == table[4] && table[4] == table[7] && table[1] != null) return true;
+    if (table[2] == table[5] && table[5] == table[8] && table[2] != null) return true;
+
+    if (table[0] == table[4] && table[4] == table[8] && table[0] != null) return true;
+    if (table[2] == table[4] && table[4] == table[6] && table[2] != null) return true;
+
+    return false;
+}
 
 
 io.listen(3000);

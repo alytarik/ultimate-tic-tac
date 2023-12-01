@@ -1,13 +1,13 @@
 const socket = io("ws://localhost:3000");
 let roomID = null;
-let playerChar = null;
+let myPlayerChar = null;
 
 document.getElementById("btn-create").onclick = () => {
     socket.emit("create");
 }
 socket.on("created", (data) => {
     roomID = data.roomID;
-    playerChar = "X";
+    myPlayerChar = "X";
     document.getElementById("btn-join").disabled = true;
     document.getElementById("btn-create").disabled = true;
     document.getElementById("room-number").innerHTML = "Room ID: " + roomID;
@@ -22,7 +22,7 @@ document.getElementById("btn-join").onclick = () => {
     socket.emit("join", { roomID: roomIDInput });
     socket.on("joined", (data) => {
         roomID = data.roomID;
-        playerChar = "O";
+        myPlayerChar = "O";
         document.getElementById("btn-join").disabled = true;
         document.getElementById("btn-create").disabled = true;
         document.getElementById("room-number").innerHTML = "Room ID: " + roomID;
@@ -40,6 +40,12 @@ socket.on("cellClicked", ({ tableID, cellID, playerChar }) => {
     cell.style.color = playerChar == "X" ? "red" : "blue";
 });
 
+socket.on("winTable", ({ tableID, winner }) => {
+    console.log("winTable");
+    const table = document.getElementById("table-" + tableID);
+    table.style.backgroundColor = winner == "X" ? "red" : "blue";
+});
+
 
 Array.from(document.getElementsByClassName("cell")).forEach(element => {
     element.onclick = () => {
@@ -51,5 +57,5 @@ Array.from(document.getElementsByClassName("cell")).forEach(element => {
 function cellClick(tableID, cellID) {
     console.log("clicked on " + tableID + " " + cellID);
     if (roomID == null) return;
-    socket.emit("cellClick", { roomID: roomID, tableID: tableID, cellID: cellID, playerChar: playerChar });
+    socket.emit("cellClick", { roomID: roomID, tableID: tableID, cellID: cellID, playerChar: myPlayerChar });
 }
