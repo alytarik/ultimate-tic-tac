@@ -1,0 +1,11 @@
+td {
+    border: 1px solid black;
+    font-size: 30px;
+    width: 30px;
+    text-align: center;
+    align-items: center;
+}
+
+.board {
+    width: 100px;
+}
