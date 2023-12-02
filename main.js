@@ -92,7 +92,7 @@ function checkTable(table) {
 }
 
 
-io.listen(3000);
+io.listen(8080);
 
 var connect = require('connect');
 var serveStatic = require('serve-static');
