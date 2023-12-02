@@ -1,7 +1,16 @@
-const options = {
-    cors: true
-};
-const io = require("socket.io")(options);
+const express = require('express');
+const socketIO = require('socket.io');
+const PORT = process.env.PORT || 3000;
+const STATIC_PATH = './cli';
+const server = express()
+    .use(express.static(STATIC_PATH))
+    .listen(PORT, () => console.log(`Listening on ${PORT}`));
+const io = require("socket.io")(server, {
+    cors: {
+        origins: "*:*",
+        methods: ["GET", "POST"]
+    }
+});
 
 let rooms = {};
 
@@ -91,12 +100,3 @@ function checkTable(table) {
     return false;
 }
 
-
-io.listen(8080);
-
-var connect = require('connect');
-var serveStatic = require('serve-static');
-
-connect()
-    .use(serveStatic("./cli"))
-    .listen(8080, () => console.log('Server running on 8080...'));
