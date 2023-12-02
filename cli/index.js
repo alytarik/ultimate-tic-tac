@@ -1,4 +1,4 @@
-const socket = io("ws://localhost:3000", { transports: ['websocket'] });
+const socket = io({ transports: ['websocket'] });
 let roomID = null;
 let myPlayerChar = null;
 
