@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
     //create
     socket.on('create', () => {
         const roomID = createRoomID();
-        rooms[roomID] = { "players": [socket.id], "turn": 0, board: [[], [], [], [], [], [], [], [], []] };
+        rooms[roomID] = { "players": [socket.id], "turn": 0, board: [[], [], [], [], [], [], [], [], []], winners: Array(9).fill(null), winner: null };
         socket.emit('created', { roomID: roomID });
         console.log('Client created a room: ' + roomID);
     });
@@ -67,6 +67,14 @@ io.on('connection', (socket) => {
             socket.emit('invalid', 'Cell already taken');
             return;
         }
+        if (rooms[roomID].winners[tableID] != null) {
+            socket.emit('invalid', 'Board is finished');
+            return;
+        }
+        if (rooms[roomID].winner != null) {
+            socket.emit('invalid', 'Game is finished');
+            return;
+        }
         rooms[roomID].board[tableID][cellID] = playerChar;
         rooms[roomID].turn = (rooms[roomID].turn + 1) % 2;
         socket.emit('cellClicked', { roomID: roomID, tableID: tableID, cellID: cellID, playerChar: playerChar });
@@ -75,7 +83,15 @@ io.on('connection', (socket) => {
         if (checkTable(rooms[roomID].board[tableID])) {
             socket.emit('winTable', { roomID: roomID, tableID: tableID, winner: playerChar });
             socket.broadcast.to(rooms[roomID].players[rooms[roomID].turn]).emit('winTable', { roomID: roomID, tableID: tableID, winner: playerChar });
+            rooms[roomID].winners[tableID] = playerChar;
             console.log('Client won the table ' + tableID + ' in room ' + roomID);
+
+            if (checkTable(rooms[roomID].winners)) {
+                socket.emit('winGame', { roomID: roomID, winner: playerChar });
+                socket.broadcast.to(rooms[roomID].players[rooms[roomID].turn]).emit('winGame', { roomID: roomID, winner: playerChar });
+                rooms[roomID].winner = playerChar;
+                console.log('Client won the game in room ' + roomID);
+            }
         }
     });
 

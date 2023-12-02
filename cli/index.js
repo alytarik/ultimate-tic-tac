@@ -46,6 +46,11 @@ socket.on("winTable", ({ tableID, winner }) => {
     table.style.backgroundColor = winner == "X" ? "red" : "blue";
 });
 
+socket.on("winGame", ({ winner }) => {
+    console.log("winGame " + winner);
+    alert("Player " + winner + " won the game!");
+});
+
 
 Array.from(document.getElementsByClassName("cell")).forEach(element => {
     element.onclick = () => {
